@@ -1,18 +1,29 @@
 package com.krillsong.finalweek2048;
 
+import com.almasb.fxgl.app.ApplicationMode;
 import com.almasb.fxgl.app.GameApplication;
 import com.almasb.fxgl.app.GameSettings;
+import com.almasb.fxgl.app.MenuItem;
+import com.almasb.fxgl.app.scene.FXGLMenu;
+import com.almasb.fxgl.app.scene.SceneFactory;
+import com.almasb.fxgl.app.scene.SimpleGameMenu;
 import com.almasb.fxgl.dsl.FXGL;
 import com.almasb.fxgl.entity.Entity;
+import com.almasb.fxgl.entity.components.IDComponent;
 import com.almasb.fxgl.entity.level.Level;
 import com.almasb.fxgl.entity.level.text.TextLevelLoader;
 import com.almasb.fxgl.input.Input;
+import com.almasb.fxgl.localization.Language;
 import com.almasb.fxgl.pathfinding.CellState;
 import com.almasb.fxgl.pathfinding.astar.AStarGrid;
+import com.almasb.fxgl.physics.CollisionHandler;
+import com.almasb.fxgl.physics.PhysicsWorld;
 import com.krillsong.finalweek2048.components.PlayerComponent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.text.Text;
 
+import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.Map;
 
 import static com.almasb.fxgl.dsl.FXGL.*;
@@ -28,7 +39,7 @@ public class FinalWeek2048App extends GameApplication {
     private AStarGrid grid;
     private Entity firstPlayer;
     private Entity secondPlayer;
-    private PlayerComponent playerComponent;
+    private PlayerComponent firstPlayerComponent;
     private PlayerComponent secondPlayerComponent;
     @Override
     protected void initSettings(GameSettings gameSettings) {
@@ -36,6 +47,24 @@ public class FinalWeek2048App extends GameApplication {
         gameSettings.setHeight(800);
         gameSettings.setTitle("Demo 2048");
         gameSettings.setVersion("1.0");
+        gameSettings.setProfilingEnabled(false);
+        gameSettings.setMainMenuEnabled(true);
+        gameSettings.setGameMenuEnabled(true);
+        gameSettings.setManualResizeEnabled(true);
+        gameSettings.setPreserveResizeRatio(true);
+        gameSettings.setIntroEnabled(false);
+//        gameSettings.setDefaultLanguage(Language.CHINESE);
+        gameSettings.setApplicationMode(ApplicationMode.RELEASE);
+//        gameSettings.setSceneFactory(new SceneFactory() {
+//            @Override
+//            public FXGLMenu newMainMenu() {
+//                return new FinalWeekMenu();
+//            }
+//            @Override
+//            public FXGLMenu newGameMenu() {
+//                return new SimpleGameMenu();
+//            }
+//        });
     }
 
     public AStarGrid getGrid() {
@@ -55,24 +84,33 @@ public class FinalWeek2048App extends GameApplication {
         });
 
         firstPlayer = spawn("firstPlayer");
-        playerComponent = firstPlayer.getComponent(PlayerComponent.class);
+        firstPlayerComponent = firstPlayer.getComponent(PlayerComponent.class);
         secondPlayer = spawn("secondPlayer");
         secondPlayerComponent = secondPlayer.getComponent(PlayerComponent.class);
+        getWorldProperties().<Integer>addListener("firstPlayerScore", (old, newScore) -> {
+            if (newScore == 11) {
+                showGameOver("Player 1");
+            }
+        });
 
+        getWorldProperties().<Integer>addListener("secondPlayerScore", (old, newScore) -> {
+            if (newScore == 11) {
+                showGameOver("Player 2");
+            }
+        });
     }
 
     @Override
     protected void initInput() {
         Input input = getInput();
-            FXGL.onKeyDown(KeyCode.D, () -> firstPlayer.getComponent(PlayerComponent.class).moveRight());
-            FXGL.onKeyDown(KeyCode.A, () -> firstPlayer.getComponent(PlayerComponent.class).moveLeft());
-            FXGL.onKeyDown(KeyCode.S, () -> {
-            });
-            FXGL.onKeyDown(KeyCode.LEFT, () -> secondPlayer.getComponent(PlayerComponent.class).moveLeft());
-            FXGL.onKeyDown(KeyCode.RIGHT, () -> secondPlayer.getComponent(PlayerComponent.class).moveRight());
-            FXGL.onKeyDown(KeyCode.DOWN, () -> {
-            });
+            FXGL.onKeyDown(KeyCode.D, "玩家一向右移动", () -> firstPlayerComponent.moveRight());
+            FXGL.onKeyDown(KeyCode.A, "玩家一向左移动", () -> firstPlayerComponent.moveLeft());
+            FXGL.onKey(KeyCode.S,"玩家一释放方块", () -> firstPlayerComponent.placeBlock());
+            FXGL.onKeyDown(KeyCode.LEFT, "玩家二向左移动", () -> secondPlayerComponent.moveLeft());
+            FXGL.onKeyDown(KeyCode.RIGHT, "玩家二向右移动", () -> secondPlayerComponent.moveRight());
+            FXGL.onKey(KeyCode.DOWN, "玩家二释放方块", () -> secondPlayerComponent.placeBlock());
     }
+
     @Override
     protected void initUI() {
         Text textFirst = new Text();
@@ -87,12 +125,46 @@ public class FinalWeek2048App extends GameApplication {
         textSecond.textProperty().bind(FXGL.getWorldProperties().intProperty("secondPlayerScore").asString("Second Player Score: %d"));
         // 将与实体相关联的视图添加到场景图中
         FXGL.getGameScene().addUINodes(textFirst, textSecond);
+//        Text goodLuck = getUIFactoryService().newText("双人对战！尽最大的努力拿到2048", Color.AQUA, 38);
+//        addUINode(goodLuck);
+//        centerText(goodLuck);
+//        animationBuilder()
+//                .duration(Duration.seconds(2))
+//                .autoReverse(true)
+//                .repeat(2)
+//                .fadeIn(goodLuck)
+//                .build();
+    }
+    @Override
+    protected void initPhysics() {
+        PhysicsWorld physicsWorld = getPhysicsWorld();
+        physicsWorld.addCollisionHandler(new CollisionHandler(FinalWeekType.BOOKBLOCK, FinalWeekType.BOOKBLOCK) {
+            @Override
+            protected void onCollision(Entity playerBlock, Entity block) {
+                int num1 = playerBlock.getComponent(IDComponent.class).getId();
+                int num2 = block.getComponent(IDComponent.class).getId();
+                if(num1 == num2) {
+                    playerBlock.removeFromWorld();
+                    block.removeFromWorld();
+                    char ch = (char) ((int)(Math.log(num1) / Math.log(2)) + 'a');
+                    System.out.println(num1 + " " + ch);
+                    if(ch >= 'k') ch = 'k'; // 游戏胜利处理
+                    String str = "" + ch;
+                    spawn(str, 0, 0);
+                    inc("secondPlayerScore", +1);
+                }
+
+            }
+        });
     }
 
     @Override
     protected void initGameVars(Map<String, Object> vars) {
         vars.put("firstPlayerScore", 0);
         vars.put("secondPlayerScore", 0);
+    }
+    private void showGameOver(String winner) {
+        getDialogService().showMessageBox(winner + " won!\nThanks for playing", getGameController()::gotoGameMenu);
     }
     public static void main(String[] args) {
         launch(args);

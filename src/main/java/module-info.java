@@ -5,4 +5,5 @@
 __________________________*/
 open module FinalWeek2048 {
     requires com.almasb.fxgl.all;
+    requires annotations;
 }
