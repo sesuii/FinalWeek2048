@@ -30,9 +30,10 @@ import static com.almasb.fxgl.dsl.FXGLForKtKt.texture;
  @ Author: _Krill
  @ Data: 2021/12/14 15:14 
  @ Version: 1.0
+ @ Description: 实体加工工厂
 __________________________*/
 public class FinalWeekFactory implements EntityFactory {
-
+    // 加载背景
     @Spawns("background")
     public Entity newBackground(SpawnData data) {
         return FXGL.entityBuilder(data)
@@ -42,16 +43,16 @@ public class FinalWeekFactory implements EntityFactory {
                 .zIndex(-100)
                 .build();
     }
-
+    // 设置玩家属性
     @Spawns("firstPlayer")
     public Entity newFirstPlayer(SpawnData data) {
         return entityBuilder(data)
                 .atAnchored(new Point2D(40, 40), new Point2D(200, 120))
                 .type(FinalWeekType.FIRSTPLAYER)
                 .viewWithBBox(texture("Female/Poses/female_idle.png", 80, 80))
-                .with(new CellMoveComponent(80, 80, 100))
-                .with(new AStarMoveComponent(FXGL.<FinalWeek2048App>getAppCast().getGrid()))
-                .with(new PlayerComponent())
+                .with(new CellMoveComponent(80, 80, 100)) // 可碰撞
+                .with(new AStarMoveComponent(FXGL.<FinalWeek2048App>getAppCast().getGrid())) // 可以在方格移动
+                .with(new PlayerComponent()) // 玩家部件，可移动
                 .zIndex(10)
                 .build();
     }
@@ -69,6 +70,7 @@ public class FinalWeekFactory implements EntityFactory {
                 .build();
     }
 
+    // 设置随机产生方块的属性，加入物理世界（具有重力
     @Spawns("bookblock")
     public Entity newBookblock(SpawnData data) {
         PhysicsComponent physics = new PhysicsComponent();
@@ -79,7 +81,7 @@ public class FinalWeekFactory implements EntityFactory {
         var num = (int)Math.pow(2, FXGLMath.random(1, 10));
         return entityBuilder(data)
                 .type(FinalWeekType.BOOKBLOCK)
-                .with(new IDComponent("block", num))
+                .with(new IDComponent("block", num)) // 加入唯一身份识别部件，便于统计分数
                 .viewWithBBox(texture("bookblock_" + num + ".png", 80, 80))
                 .with(new CollidableComponent(true))
                 .with(physics)
@@ -87,6 +89,7 @@ public class FinalWeekFactory implements EntityFactory {
     }
 
     //----------------------布置地图--------------------------
+    // 以下实体不用管，是用来创建地图的
 
     @Spawns("a")
     public Entity newA(SpawnData data) {

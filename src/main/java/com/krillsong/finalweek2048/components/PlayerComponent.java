@@ -14,18 +14,20 @@ import static com.almasb.fxgl.dsl.FXGL.spawn;
  @ Author: _Krill
  @ Data: 2021/12/14 15:10 
  @ Version: 1.0
+ @ description: 玩家组件类
 __________________________*/
 public class PlayerComponent extends Component {
     private CellMoveComponent cell;
     private AStarMoveComponent astar;
     private int shoot = 0;
+     // 玩家按方格移动
     public void moveRight() {
         astar.moveToRightCell();
     }
-
     public void moveLeft() {
         astar.moveToLeftCell();
     }
+    // 放置方块
     public void placeBlock() {
         if (shoot == 1) {
             return;

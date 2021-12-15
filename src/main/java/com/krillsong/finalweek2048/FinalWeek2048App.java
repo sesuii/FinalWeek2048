@@ -3,17 +3,12 @@ package com.krillsong.finalweek2048;
 import com.almasb.fxgl.app.ApplicationMode;
 import com.almasb.fxgl.app.GameApplication;
 import com.almasb.fxgl.app.GameSettings;
-import com.almasb.fxgl.app.MenuItem;
-import com.almasb.fxgl.app.scene.FXGLMenu;
-import com.almasb.fxgl.app.scene.SceneFactory;
-import com.almasb.fxgl.app.scene.SimpleGameMenu;
 import com.almasb.fxgl.dsl.FXGL;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.components.IDComponent;
 import com.almasb.fxgl.entity.level.Level;
 import com.almasb.fxgl.entity.level.text.TextLevelLoader;
 import com.almasb.fxgl.input.Input;
-import com.almasb.fxgl.localization.Language;
 import com.almasb.fxgl.pathfinding.CellState;
 import com.almasb.fxgl.pathfinding.astar.AStarGrid;
 import com.almasb.fxgl.physics.CollisionHandler;
@@ -21,11 +16,7 @@ import com.almasb.fxgl.physics.PhysicsWorld;
 import com.krillsong.finalweek2048.components.PlayerComponent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.text.Text;
-
-import java.util.Arrays;
-import java.util.EnumSet;
 import java.util.Map;
-
 import static com.almasb.fxgl.dsl.FXGL.*;
 import static com.almasb.fxgl.dsl.FXGLForKtKt.getAppWidth;
 import static com.almasb.fxgl.dsl.FXGLForKtKt.getInput;
@@ -34,6 +25,7 @@ import static com.almasb.fxgl.dsl.FXGLForKtKt.getInput;
  @ Author: _Krill
  @ Data: 2021/12/14 15:07 
  @ Version: 1.0
+ @ Description: 游戏入口
 __________________________*/
 public class FinalWeek2048App extends GameApplication {
     private AStarGrid grid;
@@ -41,6 +33,7 @@ public class FinalWeek2048App extends GameApplication {
     private Entity secondPlayer;
     private PlayerComponent firstPlayerComponent;
     private PlayerComponent secondPlayerComponent;
+    // 游戏初始化设置
     @Override
     protected void initSettings(GameSettings gameSettings) {
         gameSettings.setWidth(1200);
@@ -48,6 +41,7 @@ public class FinalWeek2048App extends GameApplication {
         gameSettings.setTitle("Demo 2048");
         gameSettings.setVersion("1.0");
         gameSettings.setProfilingEnabled(false);
+        // 启用主界面菜单，这里之后会重写菜单
         gameSettings.setMainMenuEnabled(true);
         gameSettings.setGameMenuEnabled(true);
         gameSettings.setManualResizeEnabled(true);
@@ -70,11 +64,18 @@ public class FinalWeek2048App extends GameApplication {
     public AStarGrid getGrid() {
         return grid;
     }
-
+    /**
+    * @param: []
+    * @return: void
+    * @description: 初始化游戏
+    * @date:2021/12/15
+    **/
     @Override
     protected void initGame() {
+        // 加入实体工厂
         getGameWorld().addEntityFactory(new FinalWeekFactory());
-        spawn("background");
+        spawn("background"); // 载入背景
+        // 载入关卡，目前只有一关，之后还会加
         Level level = getAssetLoader().loadLevel("0.txt", new TextLevelLoader(80, 80, '0'));
         getGameWorld().setLevel(level);
         grid = AStarGrid.fromWorld(getGameWorld(), 40, 40, 80, 80, type -> {
@@ -82,11 +83,13 @@ public class FinalWeek2048App extends GameApplication {
                 return CellState.NOT_WALKABLE;
             else return CellState.WALKABLE;
         });
-
+        // 载入玩家一和玩家二
         firstPlayer = spawn("firstPlayer");
         firstPlayerComponent = firstPlayer.getComponent(PlayerComponent.class);
         secondPlayer = spawn("secondPlayer");
         secondPlayerComponent = secondPlayer.getComponent(PlayerComponent.class);
+
+        // 监听玩家的分数
         getWorldProperties().<Integer>addListener("firstPlayerScore", (old, newScore) -> {
             if (newScore == 11) {
                 showGameOver("Player 1");
@@ -100,6 +103,12 @@ public class FinalWeek2048App extends GameApplication {
         });
     }
 
+    /**
+    * @param: []
+    * @return: void
+    * @description:设置角色控制键
+    * @date:2021/12/15
+    **/
     @Override
     protected void initInput() {
         Input input = getInput();
@@ -110,9 +119,15 @@ public class FinalWeek2048App extends GameApplication {
             FXGL.onKeyDown(KeyCode.RIGHT, "玩家二向右移动", () -> secondPlayerComponent.moveRight());
             FXGL.onKey(KeyCode.DOWN, "玩家二释放方块", () -> secondPlayerComponent.placeBlock());
     }
-
+    /**
+    * @param: []
+    * @return: void
+    * @description:游戏界面UI初始化
+    * @date:2021/12/15
+    **/
     @Override
     protected void initUI() {
+        // 玩家一和玩家二的分数
         Text textFirst = new Text();
         textFirst.setTranslateX(50);
         textFirst.setTranslateY(50);
@@ -135,9 +150,17 @@ public class FinalWeek2048App extends GameApplication {
 //                .fadeIn(goodLuck)
 //                .build();
     }
+
+    /**
+    * @param: []
+    * @return: void
+    * @description:设置游戏的物理世界
+    * @date:2021/12/15
+    **/
     @Override
     protected void initPhysics() {
         PhysicsWorld physicsWorld = getPhysicsWorld();
+        // 当两个相同的方块碰撞在一起后消失，并产生一个加倍的方块
         physicsWorld.addCollisionHandler(new CollisionHandler(FinalWeekType.BOOKBLOCK, FinalWeekType.BOOKBLOCK) {
             @Override
             protected void onCollision(Entity playerBlock, Entity block) {
@@ -157,11 +180,23 @@ public class FinalWeek2048App extends GameApplication {
             }
         });
     }
-
+    /**
+    * @param: [vars]
+    * @return: void
+    * @description:载入游戏全局变量
+    * @date:2021/12/15
+    **/
     @Override
     protected void initGameVars(Map<String, Object> vars) {
         vars.put("firstPlayerScore", 0);
         vars.put("secondPlayerScore", 0);
+    }
+
+    @Override
+    protected void onPreInit() {
+        getSettings().setGlobalSoundVolume(0.25);
+        getSettings().setGlobalMusicVolume(0.5);
+        loopBGM("Scott Joplin.mp3"); // 载入背景音乐
     }
     private void showGameOver(String winner) {
         getDialogService().showMessageBox(winner + " won!\nThanks for playing", getGameController()::gotoGameMenu);
