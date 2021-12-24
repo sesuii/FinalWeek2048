@@ -2,13 +2,17 @@ package com.krillsong.finalweek2048;
 
 import com.almasb.fxgl.core.math.FXGLMath;
 import com.almasb.fxgl.dsl.FXGL;
+import com.almasb.fxgl.dsl.components.HealthIntComponent;
+import com.almasb.fxgl.dsl.components.ManaDoubleComponent;
 import com.almasb.fxgl.dsl.components.OffscreenCleanComponent;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.EntityFactory;
 import com.almasb.fxgl.entity.SpawnData;
 import com.almasb.fxgl.entity.Spawns;
+import com.almasb.fxgl.entity.component.ComponentHelper;
 import com.almasb.fxgl.entity.components.CollidableComponent;
 import com.almasb.fxgl.entity.components.IDComponent;
+import com.almasb.fxgl.entity.components.IntegerComponent;
 import com.almasb.fxgl.entity.components.IrremovableComponent;
 import com.almasb.fxgl.pathfinding.CellMoveComponent;
 import com.almasb.fxgl.pathfinding.astar.AStarMoveComponent;
@@ -19,6 +23,7 @@ import com.krillsong.finalweek2048.components.PlayerComponent;
 import javafx.geometry.Point2D;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.almasb.fxgl.dsl.FXGL.entityBuilder;
@@ -33,6 +38,7 @@ import static com.almasb.fxgl.dsl.FXGLForKtKt.texture;
  @ Description: 实体加工工厂
 __________________________*/
 public class FinalWeekFactory implements EntityFactory {
+    public static List<Character> arr = new ArrayList<>(Arrays.asList('a', 'b', 'c', 'd', 'e'));
     // 加载背景
     @Spawns("background")
     public Entity newBackground(SpawnData data) {
@@ -75,13 +81,12 @@ public class FinalWeekFactory implements EntityFactory {
     public Entity newBookblock(SpawnData data) {
         PhysicsComponent physics = new PhysicsComponent();
         physics.setBodyType(BodyType.DYNAMIC);
-        FixtureDef fd = new FixtureDef();
-        fd.setDensity(0.03f);
-        physics.setFixtureDef(fd);
-        var num = (int)Math.pow(2, FXGLMath.random(1, 10));
+        physics.setFixtureDef(new FixtureDef().density(0.03f));
+
+        var num = (int)Math.pow(2, FXGLMath.random(1, 6));
         return entityBuilder(data)
                 .type(FinalWeekType.BOOKBLOCK)
-                .with(new IDComponent("block", num)) // 加入唯一身份识别部件，便于统计分数
+                .with(new HealthIntComponent(num))
                 .viewWithBBox(texture("bookblock_" + num + ".png", 80, 80))
                 .with(new CollidableComponent(true))
                 .with(physics)
@@ -93,118 +98,155 @@ public class FinalWeekFactory implements EntityFactory {
 
     @Spawns("a")
     public Entity newA(SpawnData data) {
+        PhysicsComponent physics = new PhysicsComponent();
+        physics.setBodyType(BodyType.DYNAMIC);
+        physics.setFixtureDef(new FixtureDef().density(0.03f));
+
         return entityBuilder(data)
                 .type(FinalWeekType.BOOKBLOCK)
-                .with(new IDComponent("block", 2))
                 .viewWithBBox(texture("bookblock_2.png", 80, 80))
-                .with(new PhysicsComponent())
+                .with(new HealthIntComponent(2))
+                .with(physics)
                 .collidable()
                 .build();
     }
     @Spawns("b")
     public Entity newB(SpawnData data) {
+        PhysicsComponent physics = new PhysicsComponent();
+        physics.setBodyType(BodyType.DYNAMIC);
+        physics.setFixtureDef(new FixtureDef().density(0.03f));
+
         return entityBuilder(data)
                 .type(FinalWeekType.BOOKBLOCK)
-                .with(new IDComponent("block", 4))
                 .viewWithBBox(texture("bookblock_4.png", 80, 80))
-                .with(new PhysicsComponent())
+                .with(new HealthIntComponent(4))
+                .with(physics)
                 .collidable()
                 .build();
     }
     @Spawns("c")
     public Entity newC(SpawnData data) {
+        PhysicsComponent physics = new PhysicsComponent();
+        physics.setBodyType(BodyType.DYNAMIC);
+        physics.setFixtureDef(new FixtureDef().density(0.03f));
+
         return entityBuilder(data)
                 .type(FinalWeekType.BOOKBLOCK)
-                .with(new IDComponent("block", 8))
                 .viewWithBBox(texture("bookblock_8.png",  80, 80))
-                .with(new PhysicsComponent())
+                .with(new HealthIntComponent(8))
+                .with(physics)
                 .collidable()
                 .build();
     }
     @Spawns("d")
     public Entity newD(SpawnData data) {
+        PhysicsComponent physics = new PhysicsComponent();
+        physics.setBodyType(BodyType.DYNAMIC);
+        physics.setFixtureDef(new FixtureDef().density(0.03f));
         return entityBuilder(data)
                 .type(FinalWeekType.BOOKBLOCK)
-                .with(new IDComponent("block", 16))
                 .viewWithBBox(texture("bookblock_16.png",  80, 80))
-                .with(new PhysicsComponent())
+                .with(new HealthIntComponent(16))
+                .with(physics)
                 .collidable()
                 .build();
     }
 
     @Spawns("e")
     public Entity newE(SpawnData data) {
+        PhysicsComponent physics = new PhysicsComponent();
+        physics.setBodyType(BodyType.DYNAMIC);
+        physics.setFixtureDef(new FixtureDef().density(0.03f));
         return entityBuilder(data)
                 .type(FinalWeekType.BOOKBLOCK)
-                .with(new IDComponent("block", 32))
                 .viewWithBBox(texture("bookblock_32.png",  80, 80))
-                .with(new PhysicsComponent())
+                .with(new HealthIntComponent(32))
+                .with(physics)
                 .collidable()
                 .build();
     }
 
     @Spawns("f")
     public Entity newF(SpawnData data) {
+        PhysicsComponent physics = new PhysicsComponent();
+        physics.setBodyType(BodyType.DYNAMIC);
+        physics.setFixtureDef(new FixtureDef().density(0.03f));
         return entityBuilder(data)
                 .type(FinalWeekType.BOOKBLOCK)
-                .with(new IDComponent("block", 64))
                 .viewWithBBox(texture("bookblock_64.png",  80, 80))
-                .with(new PhysicsComponent())
+                .with(new HealthIntComponent(64))
+                .with(physics)
                 .collidable()
                 .build();
     }
 
     @Spawns("g")
     public Entity newG(SpawnData data) {
+        PhysicsComponent physics = new PhysicsComponent();
+        physics.setBodyType(BodyType.DYNAMIC);
+        physics.setFixtureDef(new FixtureDef().density(0.03f));
         return entityBuilder(data)
                 .type(FinalWeekType.BOOKBLOCK)
-                .with(new IDComponent("block", 128))
                 .viewWithBBox(texture("bookblock_128.png",  80, 80))
-                .with(new PhysicsComponent())
+                .with(new HealthIntComponent(128))
+                .with(physics)
                 .collidable()
                 .build();
     }
 
     @Spawns("h")
     public Entity newH(SpawnData data) {
+        PhysicsComponent physics = new PhysicsComponent();
+        physics.setBodyType(BodyType.DYNAMIC);
+        physics.setFixtureDef(new FixtureDef().density(0.03f));
         return entityBuilder(data)
                 .type(FinalWeekType.BOOKBLOCK)
-                .with(new IDComponent("block", 256))
                 .viewWithBBox(texture("bookblock_256.png",  80, 80))
-                .with(new PhysicsComponent())
+                .with(new HealthIntComponent(256))
+                .with(physics)
                 .collidable()
                 .build();
     }
 
     @Spawns("i")
     public Entity newI(SpawnData data) {
+        PhysicsComponent physics = new PhysicsComponent();
+        physics.setBodyType(BodyType.DYNAMIC);
+        physics.setFixtureDef(new FixtureDef().density(0.03f));
         return entityBuilder(data)
                 .type(FinalWeekType.BOOKBLOCK)
-                .with(new IDComponent("block", 512))
                 .viewWithBBox(texture("bookblock_512.png",  80, 80))
-                .with(new PhysicsComponent())
+                .with(new HealthIntComponent(512))
+                .with(physics)
                 .collidable()
                 .build();
     }
 
     @Spawns("j")
     public Entity newJ(SpawnData data) {
+        PhysicsComponent physics = new PhysicsComponent();
+        physics.setBodyType(BodyType.DYNAMIC);
+        physics.setFixtureDef(new FixtureDef().density(0.03f));
         return entityBuilder(data)
                 .type(FinalWeekType.BOOKBLOCK)
-                .with(new IDComponent("block", 1024))
+                .with(new HealthIntComponent(2))
                 .viewWithBBox(texture("bookblock_1024.png", 80, 80))
-                .with(new PhysicsComponent())
+                .with(new HealthIntComponent(1024))
+                .with(physics)
                 .collidable()
                 .build();
     }
 
     @Spawns("k")
     public Entity newK(SpawnData data) {
+        PhysicsComponent physics = new PhysicsComponent();
+        physics.setBodyType(BodyType.DYNAMIC);
+        physics.setFixtureDef(new FixtureDef().density(0.03f));
         return entityBuilder(data)
                 .type(FinalWeekType.BOOKBLOCK)
-                .with(new IDComponent("block", 2048))
                 .viewWithBBox(texture("bookblock_2048.png",  80, 80))
-                .with(new PhysicsComponent())
+                .with(new HealthIntComponent(2048))
+                .with(physics)
                 .collidable()
                 .build();
     }

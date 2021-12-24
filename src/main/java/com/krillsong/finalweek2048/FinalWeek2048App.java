@@ -1,11 +1,13 @@
 package com.krillsong.finalweek2048;
 
-import com.almasb.fxgl.app.ApplicationMode;
 import com.almasb.fxgl.app.GameApplication;
 import com.almasb.fxgl.app.GameSettings;
+import com.almasb.fxgl.app.scene.FXGLMenu;
+import com.almasb.fxgl.app.scene.SceneFactory;
+import com.almasb.fxgl.app.scene.SimpleGameMenu;
 import com.almasb.fxgl.dsl.FXGL;
+import com.almasb.fxgl.dsl.components.HealthIntComponent;
 import com.almasb.fxgl.entity.Entity;
-import com.almasb.fxgl.entity.components.IDComponent;
 import com.almasb.fxgl.entity.level.Level;
 import com.almasb.fxgl.entity.level.text.TextLevelLoader;
 import com.almasb.fxgl.input.Input;
@@ -38,27 +40,21 @@ public class FinalWeek2048App extends GameApplication {
     protected void initSettings(GameSettings gameSettings) {
         gameSettings.setWidth(1200);
         gameSettings.setHeight(800);
-        gameSettings.setTitle("Demo 2048");
+        gameSettings.setTitle("Final Week 2048");
         gameSettings.setVersion("1.0");
-        gameSettings.setProfilingEnabled(false);
         // 启用主界面菜单，这里之后会重写菜单
         gameSettings.setMainMenuEnabled(true);
         gameSettings.setGameMenuEnabled(true);
-        gameSettings.setManualResizeEnabled(true);
-        gameSettings.setPreserveResizeRatio(true);
-        gameSettings.setIntroEnabled(false);
-//        gameSettings.setDefaultLanguage(Language.CHINESE);
-        gameSettings.setApplicationMode(ApplicationMode.RELEASE);
-//        gameSettings.setSceneFactory(new SceneFactory() {
-//            @Override
-//            public FXGLMenu newMainMenu() {
-//                return new FinalWeekMenu();
-//            }
-//            @Override
-//            public FXGLMenu newGameMenu() {
-//                return new SimpleGameMenu();
-//            }
-//        });
+        gameSettings.setSceneFactory(new SceneFactory() {
+            @Override
+            public FXGLMenu newMainMenu() {
+                return new MainMenu();
+            }
+            @Override
+            public FXGLMenu newGameMenu() {
+                return new SimpleGameMenu();
+            }
+        });
     }
 
     public AStarGrid getGrid() {
@@ -83,6 +79,7 @@ public class FinalWeek2048App extends GameApplication {
                 return CellState.NOT_WALKABLE;
             else return CellState.WALKABLE;
         });
+
         // 载入玩家一和玩家二
         firstPlayer = spawn("firstPlayer");
         firstPlayerComponent = firstPlayer.getComponent(PlayerComponent.class);
@@ -91,16 +88,17 @@ public class FinalWeek2048App extends GameApplication {
 
         // 监听玩家的分数
         getWorldProperties().<Integer>addListener("firstPlayerScore", (old, newScore) -> {
-            if (newScore == 11) {
+            if (newScore > 2048) {
                 showGameOver("Player 1");
             }
         });
 
         getWorldProperties().<Integer>addListener("secondPlayerScore", (old, newScore) -> {
-            if (newScore == 11) {
+            if (newScore > 2048) {
                 showGameOver("Player 2");
             }
         });
+        getGameWorld().addEntity(entityBuilder().buildScreenBounds(100));
     }
 
     /**
@@ -128,27 +126,21 @@ public class FinalWeek2048App extends GameApplication {
     @Override
     protected void initUI() {
         // 玩家一和玩家二的分数
-        Text textFirst = new Text();
+        Text textFirst = new Text(), nextBlockFirst = new Text("下一个: ");
         textFirst.setTranslateX(50);
         textFirst.setTranslateY(50);
-
-        Text textSecond = new Text();
+        nextBlockFirst.setTranslateX(50);
+        nextBlockFirst.setTranslateY(80);
+        Text textSecond = new Text(), nextBlockSecond = new Text("下一个: ");
         textSecond.setTranslateX(getAppWidth() - 200);
         textSecond.setTranslateY(50);
+        nextBlockSecond.setTranslateX(getAppWidth() - 200);
+        nextBlockSecond.setTranslateY(80);
 
         textFirst.textProperty().bind(FXGL.getWorldProperties().intProperty("firstPlayerScore").asString("First Player Score: %d"));
         textSecond.textProperty().bind(FXGL.getWorldProperties().intProperty("secondPlayerScore").asString("Second Player Score: %d"));
         // 将与实体相关联的视图添加到场景图中
-        FXGL.getGameScene().addUINodes(textFirst, textSecond);
-//        Text goodLuck = getUIFactoryService().newText("双人对战！尽最大的努力拿到2048", Color.AQUA, 38);
-//        addUINode(goodLuck);
-//        centerText(goodLuck);
-//        animationBuilder()
-//                .duration(Duration.seconds(2))
-//                .autoReverse(true)
-//                .repeat(2)
-//                .fadeIn(goodLuck)
-//                .build();
+        FXGL.getGameScene().addUINodes(textFirst, textSecond, nextBlockFirst, nextBlockSecond);
     }
 
     /**
@@ -164,18 +156,24 @@ public class FinalWeek2048App extends GameApplication {
         physicsWorld.addCollisionHandler(new CollisionHandler(FinalWeekType.BOOKBLOCK, FinalWeekType.BOOKBLOCK) {
             @Override
             protected void onCollision(Entity playerBlock, Entity block) {
-                int num1 = playerBlock.getComponent(IDComponent.class).getId();
-                int num2 = block.getComponent(IDComponent.class).getId();
-                if(num1 == num2) {
-                    playerBlock.removeFromWorld();
-                    block.removeFromWorld();
-                    char ch = (char) ((int)(Math.log(num1) / Math.log(2)) + 'a');
-                    System.out.println(num1 + " " + ch);
-                    if(ch >= 'k') ch = 'k'; // 游戏胜利处理
-                    String str = "" + ch;
-                    spawn(str, 0, 0);
-                    inc("secondPlayerScore", +1);
+                int num1 = playerBlock.getComponent(HealthIntComponent.class).getMaxValue();
+                int num2 = block.getComponent(HealthIntComponent.class).getMaxValue();
+                if(playerBlock.isType(block.getType())) {
+                    if(num1 == num2) {
+                        double x = block.getCenter().getX() - 40, y = block.getCenter().getY() - 40;
+                        playerBlock.removeFromWorld();
+                        block.removeFromWorld();
+                        int score = (int)(Math.log(num1) / Math.log(2));
+                        char ch = (char) (score + 'a');
+                        if(ch >= 'k') {
+                            showGameOver("玩家一");
+                        }
+                        String str = "" + ch;
+                        spawn(str, x, y);
+                        inc("secondPlayerScore", +num1);
+                    }
                 }
+
 
             }
         });
@@ -198,6 +196,7 @@ public class FinalWeek2048App extends GameApplication {
         getSettings().setGlobalMusicVolume(0.5);
         loopBGM("Scott Joplin.mp3"); // 载入背景音乐
     }
+
     private void showGameOver(String winner) {
         getDialogService().showMessageBox(winner + " won!\nThanks for playing", getGameController()::gotoGameMenu);
     }
