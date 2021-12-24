@@ -1,5 +1,7 @@
 package com.krillsong.finalweek2048.components;
 
+import com.almasb.fxgl.core.math.FXGLMath;
+import com.almasb.fxgl.dsl.FXGL;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.SpawnData;
 import com.almasb.fxgl.entity.component.Component;
@@ -8,12 +10,14 @@ import com.almasb.fxgl.pathfinding.astar.AStarMoveComponent;
 import com.almasb.fxgl.texture.AnimatedTexture;
 import javafx.util.Duration;
 
+import java.util.Random;
+
 import static com.almasb.fxgl.dsl.FXGL.getGameTimer;
 import static com.almasb.fxgl.dsl.FXGL.spawn;
 
 /*________________________
  @ Author: _Krill
- @ Data: 2021/12/14 15:10 
+ @ Data: 2021/12/14 15:10
  @ Version: 1.0
  @ description: 玩家组件类
 __________________________*/
@@ -29,14 +33,14 @@ public class PlayerComponent extends Component {
         astar.moveToLeftCell();
     }
     // 放置方块
-    public void placeBlock() {
+    public void placeBlock(String blockType) {
         if (shoot == 1) {
             return;
         }
         shoot++;
-        Entity bomb = spawn("bookblock", new SpawnData(cell.getCellX() * 80, cell.getCellY() * 80));
         getGameTimer().runOnceAfter(() -> {
             shoot--;
         }, Duration.seconds(0.5));
+        spawn(blockType, new SpawnData(cell.getCellX() * 80, cell.getCellY() * 80));
     }
 }

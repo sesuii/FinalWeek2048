@@ -38,7 +38,6 @@ import static com.almasb.fxgl.dsl.FXGLForKtKt.texture;
  @ Description: 实体加工工厂
 __________________________*/
 public class FinalWeekFactory implements EntityFactory {
-    public static List<Character> arr = new ArrayList<>(Arrays.asList('a', 'b', 'c', 'd', 'e'));
     // 加载背景
     @Spawns("background")
     public Entity newBackground(SpawnData data) {
@@ -76,25 +75,7 @@ public class FinalWeekFactory implements EntityFactory {
                 .build();
     }
 
-    // 设置随机产生方块的属性，加入物理世界（具有重力
-    @Spawns("bookblock")
-    public Entity newBookblock(SpawnData data) {
-        PhysicsComponent physics = new PhysicsComponent();
-        physics.setBodyType(BodyType.DYNAMIC);
-        physics.setFixtureDef(new FixtureDef().density(0.03f));
-
-        var num = (int)Math.pow(2, FXGLMath.random(1, 6));
-        return entityBuilder(data)
-                .type(FinalWeekType.BOOKBLOCK)
-                .with(new HealthIntComponent(num))
-                .viewWithBBox(texture("bookblock_" + num + ".png", 80, 80))
-                .with(new CollidableComponent(true))
-                .with(physics)
-                .buildAndAttach();
-    }
-
     //----------------------布置地图--------------------------
-    // 以下实体不用管，是用来创建地图的
 
     @Spawns("a")
     public Entity newA(SpawnData data) {

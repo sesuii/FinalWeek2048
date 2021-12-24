@@ -11,6 +11,7 @@ import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.level.Level;
 import com.almasb.fxgl.entity.level.text.TextLevelLoader;
 import com.almasb.fxgl.input.Input;
+import com.almasb.fxgl.input.UserAction;
 import com.almasb.fxgl.pathfinding.CellState;
 import com.almasb.fxgl.pathfinding.astar.AStarGrid;
 import com.almasb.fxgl.physics.CollisionHandler;
@@ -42,7 +43,7 @@ public class FinalWeek2048App extends GameApplication {
         gameSettings.setHeight(800);
         gameSettings.setTitle("Final Week 2048");
         gameSettings.setVersion("1.0");
-        // 启用主界面菜单，这里之后会重写菜单
+        // 启用主界面菜单
         gameSettings.setMainMenuEnabled(true);
         gameSettings.setGameMenuEnabled(true);
         gameSettings.setSceneFactory(new SceneFactory() {
@@ -110,12 +111,24 @@ public class FinalWeek2048App extends GameApplication {
     @Override
     protected void initInput() {
         Input input = getInput();
-            FXGL.onKeyDown(KeyCode.D, "玩家一向右移动", () -> firstPlayerComponent.moveRight());
-            FXGL.onKeyDown(KeyCode.A, "玩家一向左移动", () -> firstPlayerComponent.moveLeft());
-            FXGL.onKey(KeyCode.S,"玩家一释放方块", () -> firstPlayerComponent.placeBlock());
-            FXGL.onKeyDown(KeyCode.LEFT, "玩家二向左移动", () -> secondPlayerComponent.moveLeft());
-            FXGL.onKeyDown(KeyCode.RIGHT, "玩家二向右移动", () -> secondPlayerComponent.moveRight());
-            FXGL.onKey(KeyCode.DOWN, "玩家二释放方块", () -> secondPlayerComponent.placeBlock());
+            input.addAction(new UserAction("玩家一释放方块") {
+                @Override
+                protected void onActionEnd() {
+                    firstPlayerComponent.placeBlock(getWorldProperties().getString("fBlock"));
+                    getWorldProperties().setValue("fBlock", String.valueOf((char) random('a', 'e')));
+                }
+            }, KeyCode.S);
+            onKeyDown(KeyCode.D, "玩家一向右移动", () -> firstPlayerComponent.moveRight());
+            onKeyDown(KeyCode.A, "玩家一向左移动", () -> firstPlayerComponent.moveLeft());
+            onKeyDown(KeyCode.LEFT, "玩家二向左移动", () -> secondPlayerComponent.moveLeft());
+            onKeyDown(KeyCode.RIGHT, "玩家二向右移动", () -> secondPlayerComponent.moveRight());
+            input.addAction(new UserAction("玩家二释放方块") {
+            @Override
+            protected void onActionEnd() {
+                secondPlayerComponent.placeBlock(getWorldProperties().getString("sBlock"));
+                getWorldProperties().setValue("sBlock", String.valueOf((char) random('a', 'e')));
+            }
+        }, KeyCode.DOWN);
     }
     /**
     * @param: []
@@ -137,10 +150,12 @@ public class FinalWeek2048App extends GameApplication {
         nextBlockSecond.setTranslateX(getAppWidth() - 200);
         nextBlockSecond.setTranslateY(80);
 
-        textFirst.textProperty().bind(FXGL.getWorldProperties().intProperty("firstPlayerScore").asString("First Player Score: %d"));
-        textSecond.textProperty().bind(FXGL.getWorldProperties().intProperty("secondPlayerScore").asString("Second Player Score: %d"));
+        textFirst.textProperty().bind(getWorldProperties().intProperty("firstPlayerScore").asString("First Player Score: %d"));
+        textSecond.textProperty().bind(getWorldProperties().intProperty("secondPlayerScore").asString("Second Player Score: %d"));
+        nextBlockFirst.textProperty().bind(getWorldProperties().stringProperty("fBlock"));
+        nextBlockSecond.textProperty().bind(getWorldProperties().stringProperty("sBlock"));
         // 将与实体相关联的视图添加到场景图中
-        FXGL.getGameScene().addUINodes(textFirst, textSecond, nextBlockFirst, nextBlockSecond);
+        getGameScene().addUINodes(textFirst, textSecond, nextBlockFirst, nextBlockSecond);
     }
 
     /**
@@ -188,12 +203,14 @@ public class FinalWeek2048App extends GameApplication {
     protected void initGameVars(Map<String, Object> vars) {
         vars.put("firstPlayerScore", 0);
         vars.put("secondPlayerScore", 0);
+        vars.put("fBlock", "a");
+        vars.put("sBlock", "a");
     }
 
     @Override
     protected void onPreInit() {
-        getSettings().setGlobalSoundVolume(0.25);
-        getSettings().setGlobalMusicVolume(0.5);
+        getSettings().setGlobalSoundVolume(0.5);
+        getSettings().setGlobalMusicVolume(0.25);
         loopBGM("Scott Joplin.mp3"); // 载入背景音乐
     }
 
