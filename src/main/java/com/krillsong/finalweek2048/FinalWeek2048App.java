@@ -8,6 +8,7 @@ import com.almasb.fxgl.app.scene.SimpleGameMenu;
 import com.almasb.fxgl.dsl.FXGL;
 import com.almasb.fxgl.dsl.components.HealthIntComponent;
 import com.almasb.fxgl.entity.Entity;
+import com.almasb.fxgl.entity.components.IDComponent;
 import com.almasb.fxgl.entity.level.Level;
 import com.almasb.fxgl.entity.level.text.TextLevelLoader;
 import com.almasb.fxgl.input.Input;
@@ -17,8 +18,14 @@ import com.almasb.fxgl.pathfinding.astar.AStarGrid;
 import com.almasb.fxgl.physics.CollisionHandler;
 import com.almasb.fxgl.physics.PhysicsWorld;
 import com.krillsong.finalweek2048.components.PlayerComponent;
+import javafx.css.converter.FontConverter;
+import javafx.geometry.Point2D;
 import javafx.scene.input.KeyCode;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
 import javafx.scene.text.Text;
+import javafx.util.Duration;
+
 import java.util.Map;
 import static com.almasb.fxgl.dsl.FXGL.*;
 import static com.almasb.fxgl.dsl.FXGLForKtKt.getAppWidth;
@@ -42,7 +49,8 @@ public class FinalWeek2048App extends GameApplication {
         gameSettings.setWidth(1200);
         gameSettings.setHeight(800);
         gameSettings.setTitle("Final Week 2048");
-        gameSettings.setVersion("1.0");
+        gameSettings.setVersion("江财版");
+
         // 启用主界面菜单
         gameSettings.setMainMenuEnabled(true);
         gameSettings.setGameMenuEnabled(true);
@@ -72,15 +80,17 @@ public class FinalWeek2048App extends GameApplication {
         // 加入实体工厂
         getGameWorld().addEntityFactory(new FinalWeekFactory());
         spawn("background"); // 载入背景
-        // 载入关卡，目前只有一关，之后还会加
-        Level level = getAssetLoader().loadLevel("0.txt", new TextLevelLoader(80, 80, '0'));
+        // 载入关卡
+        var level = getAssetLoader().loadLevel("0.txt", new TextLevelLoader(80, 80, '0'));
         getGameWorld().setLevel(level);
         grid = AStarGrid.fromWorld(getGameWorld(), 40, 40, 80, 80, type -> {
             if (type.equals(FinalWeekType.BOOKBLOCK))
                 return CellState.NOT_WALKABLE;
             else return CellState.WALKABLE;
         });
-
+        for(int i = 0; i < 10; i++) {
+            spawn("platform", i * 120, 160);
+        }
         // 载入玩家一和玩家二
         firstPlayer = spawn("firstPlayer");
         firstPlayerComponent = firstPlayer.getComponent(PlayerComponent.class);
@@ -89,14 +99,16 @@ public class FinalWeek2048App extends GameApplication {
 
         // 监听玩家的分数
         getWorldProperties().<Integer>addListener("firstPlayerScore", (old, newScore) -> {
-            if (newScore > 2048) {
-                showGameOver("Player 1");
+            if (newScore >= 2048) {
+                showGameOver("玩家一");
+                if(level.getHeight() < 2) inc("level", +1);
             }
         });
 
         getWorldProperties().<Integer>addListener("secondPlayerScore", (old, newScore) -> {
-            if (newScore > 2048) {
-                showGameOver("Player 2");
+            if (newScore >= 2048) {
+                showGameOver("玩家二");
+                if(level.getHeight() < 2) inc("level", +1);
             }
         });
         getGameWorld().addEntity(entityBuilder().buildScreenBounds(100));
@@ -114,8 +126,10 @@ public class FinalWeek2048App extends GameApplication {
             input.addAction(new UserAction("玩家一释放方块") {
                 @Override
                 protected void onActionEnd() {
-                    firstPlayerComponent.placeBlock(getWorldProperties().getString("fBlock"));
-                    getWorldProperties().setValue("fBlock", String.valueOf((char) random('a', 'e')));
+                    int num = getWorldProperties().getInt("fBlock");
+                    num = (int) (Math.log(num) / Math.log(2)) - 1;
+                    firstPlayerComponent.placeBlock((char)(num + 'a') + "", 1);
+                    getWorldProperties().setValue("fBlock", (int) Math.pow(2, random(1, 6)));
                 }
             }, KeyCode.S);
             onKeyDown(KeyCode.D, "玩家一向右移动", () -> firstPlayerComponent.moveRight());
@@ -125,8 +139,10 @@ public class FinalWeek2048App extends GameApplication {
             input.addAction(new UserAction("玩家二释放方块") {
             @Override
             protected void onActionEnd() {
-                secondPlayerComponent.placeBlock(getWorldProperties().getString("sBlock"));
-                getWorldProperties().setValue("sBlock", String.valueOf((char) random('a', 'e')));
+                int num = getWorldProperties().getInt("sBlock");
+                num = (int) (Math.log(num) / Math.log(2));
+                secondPlayerComponent.placeBlock((char)(num + 'a') + "", 2);
+                getWorldProperties().setValue("sBlock", (int) Math.pow(2, random(1, 6)));
             }
         }, KeyCode.DOWN);
     }
@@ -150,10 +166,15 @@ public class FinalWeek2048App extends GameApplication {
         nextBlockSecond.setTranslateX(getAppWidth() - 200);
         nextBlockSecond.setTranslateY(80);
 
-        textFirst.textProperty().bind(getWorldProperties().intProperty("firstPlayerScore").asString("First Player Score: %d"));
-        textSecond.textProperty().bind(getWorldProperties().intProperty("secondPlayerScore").asString("Second Player Score: %d"));
-        nextBlockFirst.textProperty().bind(getWorldProperties().stringProperty("fBlock"));
-        nextBlockSecond.textProperty().bind(getWorldProperties().stringProperty("sBlock"));
+        textFirst.setStroke(Color.WHITESMOKE);
+        textSecond.setStroke(Color.WHITESMOKE);
+        nextBlockFirst.setStroke(Color.WHITESMOKE);
+        nextBlockSecond.setStroke(Color.WHITESMOKE);
+
+        textFirst.textProperty().bind(getWorldProperties().intProperty("firstPlayerScore").asString("玩家一得分: [%d]"));
+        textSecond.textProperty().bind(getWorldProperties().intProperty("secondPlayerScore").asString("玩家二得分: [%d]"));
+        nextBlockFirst.textProperty().bind(getWorldProperties().intProperty("fBlock").asString("下一个方块: [%d]"));
+        nextBlockSecond.textProperty().bind(getWorldProperties().intProperty("sBlock").asString("下一个方块: [%d]"));
         // 将与实体相关联的视图添加到场景图中
         getGameScene().addUINodes(textFirst, textSecond, nextBlockFirst, nextBlockSecond);
     }
@@ -173,23 +194,36 @@ public class FinalWeek2048App extends GameApplication {
             protected void onCollision(Entity playerBlock, Entity block) {
                 int num1 = playerBlock.getComponent(HealthIntComponent.class).getMaxValue();
                 int num2 = block.getComponent(HealthIntComponent.class).getMaxValue();
+                String curBlock = "";
                 if(playerBlock.isType(block.getType())) {
+                    if(playerBlock.hasComponent(IDComponent.class)) {
+                        curBlock = playerBlock.getComponent(IDComponent.class).getName();
+                    }
                     if(num1 == num2) {
+                        Point2D explosionSpawnPoint = playerBlock.getCenter().subtract(64, 64);
+                        spawn("explosion", explosionSpawnPoint);
+                        runOnce(()->play("combine.wav"), Duration.seconds(0.5));
                         double x = block.getCenter().getX() - 40, y = block.getCenter().getY() - 40;
                         playerBlock.removeFromWorld();
                         block.removeFromWorld();
                         int score = (int)(Math.log(num1) / Math.log(2));
                         char ch = (char) (score + 'a');
                         if(ch >= 'k') {
-                            showGameOver("玩家一");
+                            if(curBlock == "firstPlayerScore") showGameOver("玩家一");
+                                else showGameOver("玩家二");
                         }
                         String str = "" + ch;
                         spawn(str, x, y);
-                        inc("secondPlayerScore", +num1);
+                        if(curBlock != "") inc(curBlock, +num1);
                     }
                 }
-
-
+            }
+        });
+        physicsWorld.addCollisionHandler(new CollisionHandler(FinalWeekType.BOOKBLOCK, FinalWeekType.PLATFORM) {
+            @Override
+            protected void onCollision(Entity block, Entity platform) {
+                if(block.getComponent(IDComponent.class).getName() == "firstPlayerScore") showGameOver("玩家二");
+                    else showGameOver("玩家一");
             }
         });
     }
@@ -203,19 +237,21 @@ public class FinalWeek2048App extends GameApplication {
     protected void initGameVars(Map<String, Object> vars) {
         vars.put("firstPlayerScore", 0);
         vars.put("secondPlayerScore", 0);
-        vars.put("fBlock", "a");
-        vars.put("sBlock", "a");
+        vars.put("fBlock", 2);
+        vars.put("sBlock", 2);
+        vars.put("level", 0);
     }
 
     @Override
     protected void onPreInit() {
         getSettings().setGlobalSoundVolume(0.5);
-        getSettings().setGlobalMusicVolume(0.25);
+        getSettings().setGlobalMusicVolume(0.15);
         loopBGM("Scott Joplin.mp3"); // 载入背景音乐
     }
 
     private void showGameOver(String winner) {
-        getDialogService().showMessageBox(winner + " won!\nThanks for playing", getGameController()::gotoGameMenu);
+        getDialogService().showMessageBox(winner + "胜利!\n感谢参与测试！", getGameController()::gotoGameMenu);
+
     }
     public static void main(String[] args) {
         launch(args);

@@ -5,15 +5,14 @@ import com.almasb.fxgl.dsl.FXGL;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.SpawnData;
 import com.almasb.fxgl.entity.component.Component;
+import com.almasb.fxgl.entity.components.IDComponent;
 import com.almasb.fxgl.pathfinding.CellMoveComponent;
 import com.almasb.fxgl.pathfinding.astar.AStarMoveComponent;
-import com.almasb.fxgl.texture.AnimatedTexture;
 import javafx.util.Duration;
 
 import java.util.Random;
 
-import static com.almasb.fxgl.dsl.FXGL.getGameTimer;
-import static com.almasb.fxgl.dsl.FXGL.spawn;
+import static com.almasb.fxgl.dsl.FXGL.*;
 
 /*________________________
  @ Author: _Krill
@@ -33,14 +32,19 @@ public class PlayerComponent extends Component {
         astar.moveToLeftCell();
     }
     // 放置方块
-    public void placeBlock(String blockType) {
+    public void placeBlock(String blockType, int player) {
+        int cnt = 0;
         if (shoot == 1) {
             return;
         }
         shoot++;
+        Entity block = spawn(blockType, new SpawnData(cell.getCellX() * 80, cell.getCellY() * 80 + 125));
+        if(player == 1) block.addComponent(new IDComponent("firstPlayerScore", cnt++));
+        else block.addComponent(new IDComponent("secondPlayerScore", cnt++));
+        getGameWorld().addEntity(block);
         getGameTimer().runOnceAfter(() -> {
             shoot--;
         }, Duration.seconds(0.5));
-        spawn(blockType, new SpawnData(cell.getCellX() * 80, cell.getCellY() * 80));
+
     }
 }

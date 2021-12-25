@@ -5,5 +5,5 @@ package com.krillsong.finalweek2048;
  @ Version: 1.0
 __________________________*/
 public enum FinalWeekType {
-    FIRSTPLAYER, SECONDPLAYER, BOOKBLOCK
+    FIRSTPLAYER, SECONDPLAYER, BOOKBLOCK, PLATFORM
 }

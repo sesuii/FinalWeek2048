@@ -2,6 +2,7 @@ package com.krillsong.finalweek2048;
 
 import com.almasb.fxgl.app.scene.MenuType;
 import com.almasb.fxgl.dsl.FXGL;
+import com.almasb.fxgl.ui.FontType;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
@@ -44,14 +45,22 @@ public class MainMenu extends FXGLMenu {
 
     public MainMenu() {
         super(MenuType.MAIN_MENU);
-//        var bg = texture("backgroundColorGrass.png", getAppWidth() + 450, getAppHeight() + 200);
-//        bg.setTranslateY(-85);
-//        bg.setTranslateX(-450);
-        getContentRoot().getChildren().setAll(new Rectangle(getAppWidth(), getAppHeight()));
-
+        var bg = texture("bg.png", getAppWidth(), getAppHeight());
+        bg.setTranslateY(0);
+        bg.setTranslateX(0);
+        getContentRoot().getChildren().add(bg);
         var title = getUIFactoryService().newText(getSettings().getTitle(), Color.WHITE, 46.0);
         title.setStroke(Color.WHITESMOKE);
         title.setStrokeWidth(1.5);
+
+        var gameStory = getUIFactoryService().newText("2021年12月21日，江西财经大学软件与物联网工程学院正式结课\n与此同时，软件学院的同学们即将面临 的是期末周！\n接踵而来的专业课考试让平时划水的小宗与小旭十分头疼\n他们决定在仅剩的时间中恶补，可" +
+                "面对他们的却是女娲补天\n大难临头，他们究竟能否到达学完所有科目顺利通过期末考试呢...", Color.WHITE, FontType.GAME, 20);
+        gameStory.setStroke(Color.WHITESMOKE);
+        gameStory.setLineSpacing(5.0);
+        gameStory.setStrokeWidth(1.0);
+        gameStory.setTranslateX(getAppWidth() / 4.0);
+        gameStory.setTranslateY(280);
+
 
         if (!FXGL.isMobile()) {
             title.setEffect(new Bloom(0.6));
@@ -61,56 +70,18 @@ public class MainMenu extends FXGLMenu {
         var version = getUIFactoryService().newText(getSettings().getVersion(), Color.WHITE, 22.0);
         centerTextBind(version, getAppWidth() / 2.0, 220);
 
-        getContentRoot().getChildren().addAll(title, version);
-
-        var color = Color.DARKBLUE;
-
-        var blocks = new ArrayList<ColorBlock>();
-
-        var blockStartX = getAppWidth() / 2.0 - 380;
-
-        for (int i = 0; i < 15; i++) {
-            var block = new ColorBlock(40, color);
-            block.setTranslateX(blockStartX + i*50);
-            block.setTranslateY(90);
-
-            blocks.add(block);
-            getContentRoot().getChildren().add(block);
-        }
-
-        for (int i = 0; i < 15; i++) {
-            var block = new ColorBlock(40, color);
-            block.setTranslateX(blockStartX + i*50);
-            block.setTranslateY(220);
-
-            blocks.add(block);
-            getContentRoot().getChildren().add(block);
-        }
-
-        for (int i = 0; i < blocks.size(); i++) {
-            var block = blocks.get(i);
-
-            animationBuilder()
-                    .delay(Duration.seconds(i * 0.05))
-                    .duration(Duration.seconds(0.5))
-                    .repeatInfinitely()
-                    .autoReverse(true)
-                    .animate(block.fillProperty())
-                    .from(color)
-                    .to(color.brighter().brighter())
-                    .buildAndPlay(this);
-        }
+        getContentRoot().getChildren().addAll(title, version, gameStory);
 
         var menuBox = new VBox(
                 3,
                 new MenuButton("开始游戏", () -> fireNewGame()),
                 new MenuButton("玩法介绍", this::instructions),
-                new MenuButton("结束游戏", () -> fireExit())
+                new MenuButton("退出游戏", () -> fireExit())
         );
-        menuBox.setSpacing(10.0); // 设置按钮之间的距离
+        menuBox.setSpacing(20.0); // 设置按钮之间的距离
         menuBox.setAlignment(Pos.TOP_CENTER);
         menuBox.setPadding(new Insets(10, 10, 10, 10));
-        menuBox.setTranslateX(getAppWidth() / 2.0 - 100);
+        menuBox.setTranslateX(getAppWidth() / 2.0 - 80);
         menuBox.setTranslateY(getAppHeight() / 2.0 + 125);
         getContentRoot().getChildren().addAll(menuBox);
     }
@@ -139,7 +110,7 @@ public class MainMenu extends FXGLMenu {
 
             text.fillProperty().bind(
                     Bindings.when(hoverProperty())
-                            .then(Color.BLUE)
+                            .then(Color.GREENYELLOW)
                             .otherwise(Color.WHITE)
             );
 

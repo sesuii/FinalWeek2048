@@ -2,6 +2,7 @@ package com.krillsong.finalweek2048;
 
 import com.almasb.fxgl.core.math.FXGLMath;
 import com.almasb.fxgl.dsl.FXGL;
+import com.almasb.fxgl.dsl.components.ExpireCleanComponent;
 import com.almasb.fxgl.dsl.components.HealthIntComponent;
 import com.almasb.fxgl.dsl.components.ManaDoubleComponent;
 import com.almasb.fxgl.dsl.components.OffscreenCleanComponent;
@@ -14,6 +15,8 @@ import com.almasb.fxgl.entity.components.CollidableComponent;
 import com.almasb.fxgl.entity.components.IDComponent;
 import com.almasb.fxgl.entity.components.IntegerComponent;
 import com.almasb.fxgl.entity.components.IrremovableComponent;
+import com.almasb.fxgl.particle.ParticleComponent;
+import com.almasb.fxgl.particle.ParticleEmitters;
 import com.almasb.fxgl.pathfinding.CellMoveComponent;
 import com.almasb.fxgl.pathfinding.astar.AStarMoveComponent;
 import com.almasb.fxgl.physics.PhysicsComponent;
@@ -21,6 +24,8 @@ import com.almasb.fxgl.physics.box2d.dynamics.BodyType;
 import com.almasb.fxgl.physics.box2d.dynamics.FixtureDef;
 import com.krillsong.finalweek2048.components.PlayerComponent;
 import javafx.geometry.Point2D;
+import javafx.scene.paint.Color;
+import javafx.util.Duration;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,8 +33,7 @@ import java.util.List;
 
 import static com.almasb.fxgl.dsl.FXGL.entityBuilder;
 import static com.almasb.fxgl.dsl.FXGL.getAppHeight;
-import static com.almasb.fxgl.dsl.FXGLForKtKt.getAppWidth;
-import static com.almasb.fxgl.dsl.FXGLForKtKt.texture;
+import static com.almasb.fxgl.dsl.FXGLForKtKt.*;
 
 /*________________________
  @ Author: _Krill
@@ -38,12 +42,36 @@ import static com.almasb.fxgl.dsl.FXGLForKtKt.texture;
  @ Description: 实体加工工厂
 __________________________*/
 public class FinalWeekFactory implements EntityFactory {
+    @Spawns("explosion")
+    public Entity newExplosion(SpawnData data) {
+        var emitter = ParticleEmitters.newExplosionEmitter(350);
+        emitter.setMaxEmissions(1);
+        emitter.setSize(2, 10);
+        emitter.setStartColor(Color.WHITE);
+        emitter.setEndColor(Color.BLUE);
+        emitter.setSpawnPointFunction(i -> new Point2D(64, 64));
+        return entityBuilder(data)
+                .with(new ExpireCleanComponent(Duration.seconds(0.66)))
+                .with(new ParticleComponent(emitter))
+                .build();
+    }
+
+    @Spawns("platform")
+    public Entity newPlatform(SpawnData data) {
+        return FXGL.entityBuilder(data)
+                .type(FinalWeekType.PLATFORM)
+                .viewWithBBox(texture("bat.png", 120, 40))
+                .collidable()
+                .with(new PhysicsComponent())
+                .zIndex(-10)
+                .build();
+    }
     // 加载背景
     @Spawns("background")
     public Entity newBackground(SpawnData data) {
         return FXGL.entityBuilder(data)
                 .at(0,0)
-                .view(texture("backgroundColorGrass.png", getAppWidth(), getAppHeight()))
+                .view(texture("town.jpg", getAppWidth(), getAppHeight()))
                 .with(new IrremovableComponent())
                 .zIndex(-100)
                 .build();
